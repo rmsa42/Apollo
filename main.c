@@ -1,26 +1,42 @@
-#include "apollo.h"
 #include <stdio.h>
 
-typedef struct List {
-	void *ptr;
-	struct List *next;
-} List;
+#define T IList, int
+#include "apollo.h"
 
 void list() {
-	List *list = NULL;
-	int a = 10;
-	int b = 20;
-	List nnext = { &b, NULL };
-	List next = { &a, &nnext };
+	IList *list = NULL;
 
-	apollo_arr_push(list, next);
-	apollo_arr_push(list, nnext);
+	apollo_list_push_front(&list, 10);
+	apollo_list_push_front(&list, 5);
+	apollo_list_push_front(&list, 0);
+	apollo_list_push_back(&list, 40);
 
-	printf("List: %d\n", *(int *)(apollo_arr_at(list, 0).next->ptr));
+	printf("List front: %d\n", apollo_list_front(list)->data);
+	printf("List back: %d\n", apollo_list_back(list)->data);
+	printf("List size: %zu\n", apollo_list_size(list));
+}
+
+void stack() {
+	int *stack = NULL;
+
+	apollo_stack_push(stack, 120);
+	apollo_stack_push(stack, 220);
+	apollo_stack_push(stack, 320);
+	apollo_stack_push(stack, 420);
+
+	apollo_stack_pop(stack);
+
+	printf("Top: %d\n", apollo_stack_top(stack));
+	for (int i = 0; i < apollo_stack_size(stack); i++) {
+		printf("Stack: %d\n", stack[i]);
+	}
+	
+	apollo_stack_free(stack);
 }
 
 int main() {
 	list();
+	stack();
 
 	float *arr = NULL;
 
