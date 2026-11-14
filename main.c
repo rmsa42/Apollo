@@ -93,7 +93,7 @@ void arr() {
 int main() {
 	map();
 	//list();
-	//stack();
-	//arr();
+	stack();
+	arr();
 	return 0;
 }

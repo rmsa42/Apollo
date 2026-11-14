@@ -1,23 +1,31 @@
-#pragma once
-
 #include <stdlib.h>
 #include <stdbool.h>
 
-// Core & Dynamic Array
+// Get Container (name, type)
+#define GET_CONTAINER_NAME(name, type) name
+#define GET_CONTAINER_TYPE(name, type) type
+#define CONTAINER_EXPAND_NAME(...) GET_CONTAINER_NAME(__VA_ARGS__)
+#define CONTAINER_EXPAND_TYPE(...) GET_CONTAINER_TYPE(__VA_ARGS__)
+// End Container (name, type)
 
-#define APOLLO_INIT_CAPACITY 1
+// Dynamic Arrays
+#define APOLLO_ARR_INIT_CAPACITY 1
 
+// Protect the header vs multiple includes
+#ifndef APOLLO_ARR_HEADER
+#define APOLLO_ARR_HEADER
 typedef struct Apollo_arr_header {
 	int count;
 	int capacity;
 } Apollo_arr_header;
+#endif
 
 #define apollo_arr_push(arr, v)																						\
 	{																												\
 		if ((arr) == NULL) {																						\
-			Apollo_arr_header *header = malloc(sizeof(Apollo_arr_header) + APOLLO_INIT_CAPACITY * sizeof(*(arr)));	\
+			Apollo_arr_header *header = malloc(sizeof(Apollo_arr_header) + APOLLO_ARR_INIT_CAPACITY * sizeof(*(arr)));	\
 			header->count = 0;																						\
-			header->capacity = APOLLO_INIT_CAPACITY;																\
+			header->capacity = APOLLO_ARR_INIT_CAPACITY;																\
 			(arr) = (void *)(header + 1);																			\
 		}																											\
 		Apollo_arr_header *header = (Apollo_arr_header *)(arr) - 1;													\
@@ -48,11 +56,9 @@ typedef struct Apollo_arr_header {
 #define apollo_arr_empty(arr) arr == NULL ? true : false
 
 #define apollo_arr_free(arr) free((Apollo_arr_header *)arr - 1)
-
-//
+// End Dynamic Arrays
 
 // Stack (LIFO)
-
 #define apollo_stack_push(stack, v) apollo_arr_push(stack, v)
 
 #define apollo_stack_pop(stack) apollo_arr_pop(stack)
@@ -64,18 +70,10 @@ typedef struct Apollo_arr_header {
 #define apollo_stack_empty(stack) apollo_arr_empty(stack)
 
 #define apollo_stack_free(stack) apollo_arr_free(stack)
+// End Stack (LIFO)
 
-//
-
-// Containers
-
-#define GET_CONTAINER_NAME(name, type) name
-#define GET_CONTAINER_TYPE(name, type) type
-#define CONTAINER_EXPAND_NAME(...) GET_CONTAINER_NAME(__VA_ARGS__)
-#define CONTAINER_EXPAND_TYPE(...) GET_CONTAINER_TYPE(__VA_ARGS__)
 
 // List
-
 // This is to stop the lsp going crazy
 #ifndef T
 #define T IList, int
@@ -171,18 +169,18 @@ static CONTAINER_NAME *apollo_list_back(CONTAINER_NAME *list) {
 static bool apollo_list_empty(CONTAINER_NAME *list) {
 	return (list == NULL ? true : false);
 }
+// End List
 
-//
-
-// Hashmaps
-
+// Hashmap
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
+// Same thing as lists
 #ifndef HM
 #define HM Map, char *, int
 #endif
+//
 
 #define APOLLO_HASHMAP_INIT_CAPACITY 100
 
@@ -230,7 +228,7 @@ static void apollo_hashmap_push(HASHMAP_NAME **hmap, HASHMAP_KEY_TYPE key, HASHM
 
 	if (*hmap == NULL) {
 		Apollo_arr_header *header = malloc(sizeof(Apollo_arr_header) + APOLLO_HASHMAP_INIT_CAPACITY * sizeof(HASHMAP_NAME));
-		header->capacity = APOLLO_INIT_CAPACITY;
+		header->capacity = APOLLO_HASHMAP_INIT_CAPACITY;
 		header->count = 0;
 		*hmap = (HASHMAP_NAME *)(header + 1);
 	}
@@ -253,7 +251,5 @@ static HASHMAP_VALUE_TYPE apollo_hashmap_get(HASHMAP_NAME *hmap, HASHMAP_KEY_TYP
 static void apollo_hashmap_free(HASHMAP_NAME *hmap) {
 	free((Apollo_arr_header *)hmap - 1);
 }
-
-//
-//
+// End Hashmap
 
