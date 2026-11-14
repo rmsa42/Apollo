@@ -67,6 +67,13 @@ typedef struct Apollo_arr_header {
 
 //
 
+// Containers
+
+#define GET_CONTAINER_NAME(name, type) name
+#define GET_CONTAINER_TYPE(name, type) type
+#define CONTAINER_EXPAND_NAME(...) GET_CONTAINER_NAME(__VA_ARGS__)
+#define CONTAINER_EXPAND_TYPE(...) GET_CONTAINER_TYPE(__VA_ARGS__)
+
 // List
 
 // This is to stop the lsp going crazy
@@ -75,10 +82,6 @@ typedef struct Apollo_arr_header {
 #endif
 //
 
-#define GET_CONTAINER_NAME(name, type) name
-#define GET_CONTAINER_TYPE(name, type) type
-#define CONTAINER_EXPAND_NAME(...) GET_CONTAINER_NAME(__VA_ARGS__)
-#define CONTAINER_EXPAND_TYPE(...) GET_CONTAINER_TYPE(__VA_ARGS__)
 #define CONTAINER_NAME CONTAINER_EXPAND_NAME(T)
 #define CONTAINER_TYPE CONTAINER_EXPAND_TYPE(T)
 
@@ -111,6 +114,19 @@ static void apollo_list_push_front(CONTAINER_NAME **list, CONTAINER_TYPE v) {
 	}
 	ptr->next = (*list)->next;
 	(*list)->next = ptr;
+}
+
+static void apollo_list_pop_front(CONTAINER_NAME **list) {
+	if (*list == NULL) {
+		return;
+	}
+	CONTAINER_NAME *tmp = (*list)->next;
+
+	(*list)->next = tmp->next;
+	if (*list == tmp) {
+		*list = NULL;
+	}
+	free(tmp);
 }
 
 static void apollo_list_pop_back(CONTAINER_NAME **list) {
@@ -157,3 +173,87 @@ static bool apollo_list_empty(CONTAINER_NAME *list) {
 }
 
 //
+
+// Hashmaps
+
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#ifndef HM
+#define HM Map, char *, int
+#endif
+
+#define APOLLO_HASHMAP_INIT_CAPACITY 100
+
+#define GET_HASHMAP_NAME(name, key_type, value_type) name
+#define GET_HASHMAP_KEY_TYPE(name, key_type, value_type) key_type
+#define GET_HASHMAP_VALUE_TYPE(name, key_type, value_type) value_type
+#define HASHMAP_EXPAND_NAME(...) GET_HASHMAP_NAME(__VA_ARGS__)
+#define HASHMAP_EXPAND_KEY_TYPE(...) GET_HASHMAP_KEY_TYPE(__VA_ARGS__)
+#define HASHMAP_EXPAND_VALUE_TYPE(...) GET_HASHMAP_VALUE_TYPE(__VA_ARGS__)
+
+#define HASHMAP_NAME HASHMAP_EXPAND_NAME(HM)
+#define HASHMAP_KEY_TYPE HASHMAP_EXPAND_KEY_TYPE(HM)
+#define HASHMAP_VALUE_TYPE HASHMAP_EXPAND_VALUE_TYPE(HM)
+
+typedef struct HASHMAP_NAME {
+	HASHMAP_KEY_TYPE key;
+	HASHMAP_VALUE_TYPE data;
+} HASHMAP_NAME;
+
+static int hash(HASHMAP_KEY_TYPE key) {
+	if (sizeof(HASHMAP_KEY_TYPE) < 8) {
+		int index = key * 5;
+		
+		index <<= 2;
+		index ^= key;
+		return (index % 100);
+	}
+	uintptr_t nbr;
+	uintptr_t index = 0;
+
+	memcpy(&nbr, &key, sizeof(HASHMAP_KEY_TYPE));
+	//printf("ptr: %ld\n", nbr);
+	index = nbr * 5;
+	//printf("Mult: %ld\n", index);
+	index ^= nbr;
+	//printf("XOR: %ld\n", index);
+	index <<= 2;
+	index ^= nbr >> 2;
+	//printf("2XOR: %ld\n", index);
+	return (index % 100);
+}
+
+static void apollo_hashmap_push(HASHMAP_NAME **hmap, HASHMAP_KEY_TYPE key, HASHMAP_VALUE_TYPE data) {
+	int index;
+
+	if (*hmap == NULL) {
+		Apollo_arr_header *header = malloc(sizeof(Apollo_arr_header) + APOLLO_HASHMAP_INIT_CAPACITY * sizeof(HASHMAP_NAME));
+		header->capacity = APOLLO_INIT_CAPACITY;
+		header->count = 0;
+		*hmap = (HASHMAP_NAME *)(header + 1);
+	}
+	Apollo_arr_header *header = (Apollo_arr_header *)(*hmap) - 1;
+	index = hash(key);
+	//printf("Map: %c -> %d. Index %d\n", key, data, index);
+	(*hmap)[index].key = key;
+	(*hmap)[index].data = data;
+	header->count++;
+}
+
+static HASHMAP_VALUE_TYPE apollo_hashmap_get(HASHMAP_NAME *hmap, HASHMAP_KEY_TYPE key) {
+	Apollo_arr_header *header = (Apollo_arr_header *)hmap - 1;
+
+	int index = hash(key);
+	printf("Index %d\n", index);
+	return (hmap[index].data);
+}
+
+static void apollo_hashmap_free(HASHMAP_NAME *hmap) {
+	free((Apollo_arr_header *)hmap - 1);
+}
+
+//
+//
+
