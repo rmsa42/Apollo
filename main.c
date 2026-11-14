@@ -44,13 +44,15 @@ void list() {
 	apollo_list_push_front(&list, 5);
 	//apollo_list_push_front(&list, 0);
 	//apollo_list_push_back(&list, 40);
-	apollo_list_pop_front(&list);
+	//apollo_list_pop_front(&list);
 
 	if (!apollo_list_empty(list)) {
 		printf("List front: %d\n", apollo_list_front(list)->data);
 		printf("List back: %d\n", apollo_list_back(list)->data);
 		printf("List size: %zu\n", apollo_list_size(list));
 	}
+
+	apollo_list_free(&list);
 }
 
 void stack() {
@@ -92,7 +94,7 @@ void arr() {
 
 int main() {
 	map();
-	//list();
+	list();
 	stack();
 	arr();
 	return 0;

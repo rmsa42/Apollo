@@ -169,6 +169,30 @@ static CONTAINER_NAME *apollo_list_back(CONTAINER_NAME *list) {
 static bool apollo_list_empty(CONTAINER_NAME *list) {
 	return (list == NULL ? true : false);
 }
+
+static void apollo_list_free(CONTAINER_NAME **list) {
+	CONTAINER_NAME *last = *list;
+
+	while ((*list)->next != last) {
+		CONTAINER_NAME *tmp = *list;
+		*list = (*list)->next;
+		free(tmp);
+	}
+	free(*list);
+	*list = NULL;
+}
+
+static void apollo_list_free_cb(CONTAINER_NAME **list, void (*cb)(CONTAINER_NAME *)) {
+	CONTAINER_NAME *last = *list;
+
+	while ((*list)->next != last) {
+		CONTAINER_NAME *tmp = *list;
+		*list = (*list)->next;
+		cb(tmp);
+	}
+	cb(*list);
+	*list = NULL;
+}
 // End List
 
 // Hashmap
