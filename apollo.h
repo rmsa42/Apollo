@@ -85,20 +85,22 @@ typedef struct Apollo_arr_header {
 
 // List
 // This is to stop the lsp going crazy
-#ifndef T
-#define T IList, int
+#ifndef L
+#define L IList, int
 #endif
 //
 
-#define LIST_NAME EXPAND(GET_ARG1, T)
-#define LIST_TYPE EXPAND(GET_ARG2, T)
+#define LIST_NAME EXPAND(GET_ARG1, L)
+#define LIST_TYPE EXPAND(GET_ARG2, L)
+
+#define LIST_FUNC_DECL(name) CAT(list_, CAT(LIST_NAME, name))
 
 typedef struct LIST_NAME {
 	LIST_TYPE data;
 	struct LIST_NAME *next;
 } LIST_NAME;
 
-static void apollo_list_push_back(LIST_NAME **list, LIST_TYPE v) {
+static void LIST_FUNC_DECL(_push_back)(LIST_NAME **list, LIST_TYPE v) {
 	LIST_NAME *ptr = (LIST_NAME *)malloc(sizeof(LIST_NAME));
 
 	ptr->data = v;
@@ -111,7 +113,7 @@ static void apollo_list_push_back(LIST_NAME **list, LIST_TYPE v) {
 	*list = ptr;
 }
 
-static void apollo_list_push_front(LIST_NAME **list, LIST_TYPE v) {
+static void LIST_FUNC_DECL(_push_front)(LIST_NAME **list, LIST_TYPE v) {
 	LIST_NAME *ptr = (LIST_NAME *)malloc(sizeof(LIST_NAME));
 	
 	ptr->data = v;
@@ -124,7 +126,7 @@ static void apollo_list_push_front(LIST_NAME **list, LIST_TYPE v) {
 	(*list)->next = ptr;
 }
 
-static void apollo_list_pop_front(LIST_NAME **list) {
+static void LIST_FUNC_DECL(_pop_front)(LIST_NAME **list) {
 	if (*list == NULL) {
 		return;
 	}
@@ -137,7 +139,7 @@ static void apollo_list_pop_front(LIST_NAME **list) {
 	free(tmp);
 }
 
-static void apollo_list_pop_back(LIST_NAME **list) {
+static void LIST_FUNC_DECL(_pop_back)(LIST_NAME **list) {
 	if (*list == NULL) {
 		return;
 	}
@@ -154,7 +156,7 @@ static void apollo_list_pop_back(LIST_NAME **list) {
 	(*list) = tmp;
 }
 
-static size_t apollo_list_size(LIST_NAME *list) {
+static size_t LIST_FUNC_DECL(_size)(LIST_NAME *list) {
 	void *last = list;
 	size_t size = 0;
 
@@ -168,19 +170,19 @@ static size_t apollo_list_size(LIST_NAME *list) {
 	return (size + 1);
 }
 
-static LIST_NAME *apollo_list_front(LIST_NAME *list) {
+static LIST_NAME *LIST_FUNC_DECL(_front)(LIST_NAME *list) {
 	return (list->next);
 }
 
-static LIST_NAME *apollo_list_back(LIST_NAME *list) {
+static LIST_NAME *LIST_FUNC_DECL(_back)(LIST_NAME *list) {
 	return (list);
 }
 
-static bool apollo_list_empty(LIST_NAME *list) {
+static bool LIST_FUNC_DECL(_empty)(LIST_NAME *list) {
 	return (list == NULL ? true : false);
 }
 
-static void apollo_list_free(LIST_NAME **list) {
+static void LIST_FUNC_DECL(_free)(LIST_NAME **list) {
 	LIST_NAME *last = *list;
 
 	while ((*list)->next != last) {
@@ -192,7 +194,7 @@ static void apollo_list_free(LIST_NAME **list) {
 	*list = NULL;
 }
 
-static void apollo_list_free_cb(LIST_NAME **list, void (*cb)(LIST_NAME *)) {
+static void LIST_FUNC_DECL(_free_cb)(LIST_NAME **list, void (*cb)(LIST_NAME *)) {
 	LIST_NAME *last = *list;
 
 	while ((*list)->next != last) {
@@ -216,71 +218,77 @@ static void apollo_list_free_cb(LIST_NAME **list, void (*cb)(LIST_NAME *)) {
 #endif
 //
 
-#define APOLLO_HASHMAP_INIT_CAPACITY 100
+#define APOLLO_HASHMAP_INIT_CAPACITY 10
 
 #define HASHMAP_NAME EXPAND(GET_ARG1, HM)
 #define HASHMAP_KEY_TYPE EXPAND(GET_ARG2, HM)
 #define HASHMAP_VALUE_TYPE EXPAND(GET_ARG3, HM)
 
-//#define HASHMAP_FUNC(name) CAT(apollo_hashmap_, CAT(HASHMAP_NAME, name))
+#define HASHMAP_FUNC_DECL(name) CAT(hmap_, CAT(HASHMAP_NAME, name))
 
 typedef struct HASHMAP_NAME {
 	HASHMAP_KEY_TYPE key;
 	HASHMAP_VALUE_TYPE data;
 } HASHMAP_NAME;
 
-static int hash(HASHMAP_KEY_TYPE key) {
-	if (sizeof(HASHMAP_KEY_TYPE) < 8) {
-		int index = key * 5;
-		
-		index <<= 2;
-		index ^= key;
-		return (index % 100);
-	}
-	uintptr_t nbr;
-	uintptr_t index = 0;
+#ifndef HASHMAP_HASH_FUNC
+#define HASHMAP_HASH_FUNC
+static int hash_4B(uint32_t k) {
+	int index = k * 5;
 
-	memcpy(&nbr, &key, sizeof(HASHMAP_KEY_TYPE));
-	//printf("ptr: %ld\n", nbr);
-	index = nbr * 5;
-	//printf("Mult: %ld\n", index);
-	index ^= nbr;
-	//printf("XOR: %ld\n", index);
 	index <<= 2;
-	index ^= nbr >> 2;
-	//printf("2XOR: %ld\n", index);
-	return (index % 100);
+	index ^= k;
+	return (index);
 }
 
-static void apollo_hashmap_push(HASHMAP_NAME **hmap, HASHMAP_KEY_TYPE key, HASHMAP_VALUE_TYPE data) {
+static int hash_8B(uint64_t k) {
+	int index = k * 5;
+
+	index ^= k;
+	index <<= 2;
+	index ^= k >> 2;
+	return (index);
+}
+
+static int hash(void *key, size_t type_size) {
+	if (type_size < 8) {
+		uint32_t k = 0;
+		memcpy(&k, key, type_size);
+		return (hash_4B(k));
+	}
+	uint64_t k = 0;
+	memcpy(&k, key, sizeof(uintptr_t));\
+	return (hash_8B(k));\
+}
+#endif
+
+static void HASHMAP_FUNC_DECL(_push)(HASHMAP_NAME **hmap, HASHMAP_KEY_TYPE key, HASHMAP_VALUE_TYPE data) {
 	if (*hmap == NULL) {
 		apollo_arr_init(*hmap, APOLLO_HASHMAP_INIT_CAPACITY, sizeof(HASHMAP_NAME));
 	}
 	Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(*hmap);
-	int index = hash(key);
-	//printf("Map: %c -> %d. Index %d\n", key, data, index);
+	int index = hash((void *)&key, sizeof(HASHMAP_KEY_TYPE)) % header->capacity;
 	(*hmap)[index].key = key;
 	(*hmap)[index].data = data;
 	header->count++;
 }
 
-static HASHMAP_VALUE_TYPE apollo_hashmap_get(HASHMAP_NAME *hmap, HASHMAP_KEY_TYPE key) {
+static HASHMAP_VALUE_TYPE HASHMAP_FUNC_DECL(_get)(HASHMAP_NAME *hmap, HASHMAP_KEY_TYPE key) {
 	Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(hmap);
 
-	int index = hash(key);
-	printf("Index %d\n", index);
+	int index = hash((void *)&key, sizeof(HASHMAP_KEY_TYPE)) % header->capacity;
 	return (hmap[index].data);
 }
 
-static size_t apollo_hashmap_size(HASHMAP_NAME *hmap) {
+static size_t HASHMAP_FUNC_DECL(_size)(HASHMAP_NAME *hmap) {
 	return (apollo_arr_size(hmap));
 }
 
-static bool apollo_hashmap_empty(HASHMAP_NAME *hmap) {
+static bool HASHMAP_FUNC_DECL(_empty)(HASHMAP_NAME *hmap) {
 	return (apollo_arr_empty(hmap));
 }
 
-static void apollo_hashmap_free(HASHMAP_NAME *hmap) {
+static void HASHMAP_FUNC_DECL(_free)(HASHMAP_NAME *hmap) {
 	apollo_arr_free(hmap);
 }
 // End Hashmap

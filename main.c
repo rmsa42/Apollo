@@ -1,60 +1,53 @@
 #include <stdio.h>
 
-#define T IList, int
+#define L IList, int
 #define HM Map, char, int
+#include "apollo.h"
+#undef HM
+#undef L
+#define L DList, double
+#define HM HMap, char *, int
 #include "apollo.h"
 
 void map() {
 	Map *map = NULL;
+	HMap *lol = NULL;
 
-	// Char *
-	//apollo_hashmap_push(&map, "fish", 10);
-	//apollo_hashmap_push(&map, "sand", 20);
-	//apollo_hashmap_push(&map, "coor", 30);
-	//printf("Key: %s -> %d\n", "fish", apollo_hashmap_get(map, "fish"));
-	//printf("Key: %s -> %d\n", "sand", apollo_hashmap_get(map, "sand"));
-	//printf("Key: %s -> %d\n", "coor", apollo_hashmap_get(map, "coor"));
+	// Map, char, int
+	hmap_Map_push(&map, 'a', 1);
+	hmap_Map_push(&map, 'd', 10);
+	hmap_Map_push(&map, 'f', 20);
+	printf("Key: %c -> %d\n", 'a', hmap_Map_get(map, 'a'));
+	printf("Key: %c -> %d\n", 'd', hmap_Map_get(map, 'd'));
+	printf("Key: %c -> %d\n", 'f', hmap_Map_get(map, 'f'));
+	printf("HashMap size: %zu %d\n", hmap_Map_size(map), hmap_Map_empty(map));
 
-	// Char
-	apollo_hashmap_push(&map, 'c', 10);
-	apollo_hashmap_push(&map, 'd', 20);
-	apollo_hashmap_push(&map, 'f', 30);
-	printf("Key: %c -> %d\n", 'c', apollo_hashmap_get(map, 'c'));
-	printf("Key: %c -> %d\n", 'd', apollo_hashmap_get(map, 'd'));
-	printf("Key: %c -> %d\n", 'f', apollo_hashmap_get(map, 'f'));
+	// HMap, char *, int
+	hmap_HMap_push(&lol, "fish", 100);
+	printf("Key: %s -> %d\n", "fish", hmap_HMap_get(lol, "fish"));
 
-	//printf("Index: %d\n", hash("a"));
-	//printf("Index: %d\n", hash("b"));
-	//printf("Index: %d\n", hash("fish"));
-	//printf("Index: %d\n", hash("fih"));
-	//printf("Index: %d\n", hash("polasd"));
-	//printf("Index: %d\n", hash("bih"));
-	//printf("Index: %d\n", hash("gih"));
-	//printf("Index: %d\n", hash("load"));
-	//printf("Index: %d\n", hash("bload"));
-
-	printf("HashMap size: %zu %d\n", apollo_hashmap_size(map), apollo_hashmap_empty(map));
-
-	apollo_hashmap_free(map);
+	hmap_Map_free(map);
+	hmap_HMap_free(lol);
 	printf("\n");
 }
 
 void list() {
 	IList *list = NULL;
 
-	apollo_list_push_front(&list, 10);
-	apollo_list_push_front(&list, 5);
-	//apollo_list_push_front(&list, 0);
-	//apollo_list_push_back(&list, 40);
-	//apollo_list_pop_front(&list);
+	list_IList_push_front(&list, 10);
+	list_IList_push_front(&list, 5);
+	//list_push_front(&list, 0);
+	list_IList_push_back(&list, 40);
+	list_IList_pop_front(&list);
+	list_IList_pop_back(&list);
 
-	if (!apollo_list_empty(list)) {
-		printf("List front: %d\n", apollo_list_front(list)->data);
-		printf("List back: %d\n", apollo_list_back(list)->data);
-		printf("List size: %zu\n", apollo_list_size(list));
+	if (!list_IList_empty(list)) {
+		printf("List front: %d\n", list_IList_front(list)->data);
+		printf("List back: %d\n", list_IList_back(list)->data);
+		printf("List size: %zu\n", list_IList_size(list));
 	}
 
-	apollo_list_free(&list);
+	list_IList_free(&list);
 }
 
 void stack() {
