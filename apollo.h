@@ -24,22 +24,28 @@ typedef struct Apollo_arr_header {
 #define GET_APOLLO_ARR_HEADER(arr) ((Apollo_arr_header *)(arr) - 1)
 #endif
 
-#define apollo_arr_push(arr, v)																							\
-	{																													\
-		if ((arr) == NULL) {																							\
-			Apollo_arr_header *header = malloc(sizeof(Apollo_arr_header) + APOLLO_ARR_INIT_CAPACITY * sizeof(*(arr)));	\
-			header->count = 0;																							\
-			header->capacity = APOLLO_ARR_INIT_CAPACITY;																\
-			(arr) = (void *)(header + 1);																				\
-		}																												\
-		Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(arr);															\
-																														\
-		if (header->capacity <= header->count) {																		\
-			header->capacity *= 2;																						\
-			header = realloc(header, sizeof(Apollo_arr_header) + header->capacity * sizeof(*(arr)));					\
-			(arr) = (void *)(header + 1);																				\
-		}																												\
-		(arr)[header->count++] = (v);																					\
+#define apollo_arr_init(arr, cap, type_size)												\
+	{																						\
+		Apollo_arr_header *header = malloc(sizeof(Apollo_arr_header) + cap * type_size);	\
+																							\
+		header->count = 0;																	\
+		header->capacity = cap;																\
+		(arr) = (void *)(header + 1);														\
+	}																						\
+
+#define apollo_arr_push(arr, v)																			\
+	{																									\
+		if ((arr) == NULL) {																			\
+			apollo_arr_init(arr, APOLLO_ARR_INIT_CAPACITY, sizeof(*(arr)));								\
+		}																								\
+		Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(arr);											\
+																										\
+		if (header->capacity <= header->count) {														\
+			header->capacity *= 2;																		\
+			header = realloc(header, sizeof(Apollo_arr_header) + header->capacity * sizeof(*(arr)));	\
+			(arr) = (void *)(header + 1);																\
+		}																								\
+		(arr)[header->count++] = (v);																	\
 	}
 
 #define apollo_arr_pop(arr)											\
@@ -248,12 +254,9 @@ static int hash(HASHMAP_KEY_TYPE key) {
 
 static void apollo_hashmap_push(HASHMAP_NAME **hmap, HASHMAP_KEY_TYPE key, HASHMAP_VALUE_TYPE data) {
 	if (*hmap == NULL) {
-		Apollo_arr_header *header = malloc(sizeof(Apollo_arr_header) + APOLLO_HASHMAP_INIT_CAPACITY * sizeof(HASHMAP_NAME));
-		header->capacity = APOLLO_HASHMAP_INIT_CAPACITY;
-		header->count = 0;
-		*hmap = (HASHMAP_NAME *)(header + 1);
+		apollo_arr_init(*hmap, APOLLO_HASHMAP_INIT_CAPACITY, sizeof(HASHMAP_NAME));
 	}
-	Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(hmap);
+	Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(*hmap);
 	int index = hash(key);
 	//printf("Map: %c -> %d. Index %d\n", key, data, index);
 	(*hmap)[index].key = key;
