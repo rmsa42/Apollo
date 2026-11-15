@@ -33,6 +33,8 @@ void map() {
 	//printf("Index: %d\n", hash("load"));
 	//printf("Index: %d\n", hash("bload"));
 
+	printf("HashMap size: %zu %d\n", apollo_hashmap_size(map), apollo_hashmap_empty(map));
+
 	apollo_hashmap_free(map);
 	printf("\n");
 }

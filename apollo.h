@@ -1,12 +1,14 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-// Get Container (name, type)
-#define GET_CONTAINER_NAME(name, type) name
-#define GET_CONTAINER_TYPE(name, type) type
-#define CONTAINER_EXPAND_NAME(...) GET_CONTAINER_NAME(__VA_ARGS__)
-#define CONTAINER_EXPAND_TYPE(...) GET_CONTAINER_TYPE(__VA_ARGS__)
-// End Container (name, type)
+// General Macros
+#define GET_ARG1(a, ...) a
+#define GET_ARG2(a, b, ...) b
+#define GET_ARG3(a, b, c, ...) c
+#define EXPAND(macro, ...) macro(__VA_ARGS__)
+#define _CAT(A, B) A##B
+#define CAT(A, B) _CAT(A, B)
+// End General Macros
 
 // Dynamic Arrays
 #define APOLLO_ARR_INIT_CAPACITY 1
@@ -18,29 +20,31 @@ typedef struct Apollo_arr_header {
 	int count;
 	int capacity;
 } Apollo_arr_header;
+
+#define GET_APOLLO_ARR_HEADER(arr) ((Apollo_arr_header *)(arr) - 1)
 #endif
 
-#define apollo_arr_push(arr, v)																						\
-	{																												\
-		if ((arr) == NULL) {																						\
+#define apollo_arr_push(arr, v)																							\
+	{																													\
+		if ((arr) == NULL) {																							\
 			Apollo_arr_header *header = malloc(sizeof(Apollo_arr_header) + APOLLO_ARR_INIT_CAPACITY * sizeof(*(arr)));	\
-			header->count = 0;																						\
+			header->count = 0;																							\
 			header->capacity = APOLLO_ARR_INIT_CAPACITY;																\
-			(arr) = (void *)(header + 1);																			\
-		}																											\
-		Apollo_arr_header *header = (Apollo_arr_header *)(arr) - 1;													\
-																													\
-		if (header->capacity <= header->count) {																	\
-			header->capacity *= 2;																					\
-			header = realloc(header, sizeof(Apollo_arr_header) + header->capacity * sizeof(*(arr)));				\
-			(arr) = (void *)(header + 1);																			\
-		}																											\
-		(arr)[header->count++] = (v);																				\
+			(arr) = (void *)(header + 1);																				\
+		}																												\
+		Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(arr);															\
+																														\
+		if (header->capacity <= header->count) {																		\
+			header->capacity *= 2;																						\
+			header = realloc(header, sizeof(Apollo_arr_header) + header->capacity * sizeof(*(arr)));					\
+			(arr) = (void *)(header + 1);																				\
+		}																												\
+		(arr)[header->count++] = (v);																					\
 	}
 
 #define apollo_arr_pop(arr)											\
 	{																\
-		Apollo_arr_header *header = (Apollo_arr_header *)(arr) - 1;	\
+		Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(arr);		\
 																	\
 		header->count--;											\
 	}
@@ -49,13 +53,13 @@ typedef struct Apollo_arr_header {
 
 #define apollo_arr_front(arr) apollo_arr_at(arr, 0)
 
-#define apollo_arr_back(arr) apollo_arr_at(arr, ((Apollo_arr_header *)(arr) - 1)->count - 1)
+#define apollo_arr_back(arr) apollo_arr_at(arr, GET_APOLLO_ARR_HEADER(arr)->count - 1)
 
-#define apollo_arr_size(arr) ((Apollo_arr_header *)arr - 1)->count
+#define apollo_arr_size(arr) GET_APOLLO_ARR_HEADER(arr)->count
 
 #define apollo_arr_empty(arr) arr == NULL ? true : false
 
-#define apollo_arr_free(arr) free((Apollo_arr_header *)arr - 1)
+#define apollo_arr_free(arr) free(GET_APOLLO_ARR_HEADER(arr))
 // End Dynamic Arrays
 
 // Stack (LIFO)
@@ -80,16 +84,16 @@ typedef struct Apollo_arr_header {
 #endif
 //
 
-#define CONTAINER_NAME CONTAINER_EXPAND_NAME(T)
-#define CONTAINER_TYPE CONTAINER_EXPAND_TYPE(T)
+#define LIST_NAME EXPAND(GET_ARG1, T)
+#define LIST_TYPE EXPAND(GET_ARG2, T)
 
-typedef struct CONTAINER_NAME {
-	CONTAINER_TYPE data;
-	struct CONTAINER_NAME *next;
-} CONTAINER_NAME;
+typedef struct LIST_NAME {
+	LIST_TYPE data;
+	struct LIST_NAME *next;
+} LIST_NAME;
 
-static void apollo_list_push_back(CONTAINER_NAME **list, CONTAINER_TYPE v) {
-	CONTAINER_NAME *ptr = (CONTAINER_NAME *)malloc(sizeof(CONTAINER_NAME));
+static void apollo_list_push_back(LIST_NAME **list, LIST_TYPE v) {
+	LIST_NAME *ptr = (LIST_NAME *)malloc(sizeof(LIST_NAME));
 
 	ptr->data = v;
 	if (*list == NULL) {
@@ -101,8 +105,8 @@ static void apollo_list_push_back(CONTAINER_NAME **list, CONTAINER_TYPE v) {
 	*list = ptr;
 }
 
-static void apollo_list_push_front(CONTAINER_NAME **list, CONTAINER_TYPE v) {
-	CONTAINER_NAME *ptr = (CONTAINER_NAME *)malloc(sizeof(CONTAINER_NAME));
+static void apollo_list_push_front(LIST_NAME **list, LIST_TYPE v) {
+	LIST_NAME *ptr = (LIST_NAME *)malloc(sizeof(LIST_NAME));
 	
 	ptr->data = v;
 	if (*list == NULL) {
@@ -114,11 +118,11 @@ static void apollo_list_push_front(CONTAINER_NAME **list, CONTAINER_TYPE v) {
 	(*list)->next = ptr;
 }
 
-static void apollo_list_pop_front(CONTAINER_NAME **list) {
+static void apollo_list_pop_front(LIST_NAME **list) {
 	if (*list == NULL) {
 		return;
 	}
-	CONTAINER_NAME *tmp = (*list)->next;
+	LIST_NAME *tmp = (*list)->next;
 
 	(*list)->next = tmp->next;
 	if (*list == tmp) {
@@ -127,11 +131,11 @@ static void apollo_list_pop_front(CONTAINER_NAME **list) {
 	free(tmp);
 }
 
-static void apollo_list_pop_back(CONTAINER_NAME **list) {
+static void apollo_list_pop_back(LIST_NAME **list) {
 	if (*list == NULL) {
 		return;
 	}
-	CONTAINER_NAME *tmp = *list;
+	LIST_NAME *tmp = *list;
 
 	while (tmp->next != *list) {
 		tmp = tmp->next;
@@ -144,7 +148,7 @@ static void apollo_list_pop_back(CONTAINER_NAME **list) {
 	(*list) = tmp;
 }
 
-static size_t apollo_list_size(CONTAINER_NAME *list) {
+static size_t apollo_list_size(LIST_NAME *list) {
 	void *last = list;
 	size_t size = 0;
 
@@ -158,23 +162,23 @@ static size_t apollo_list_size(CONTAINER_NAME *list) {
 	return (size + 1);
 }
 
-static CONTAINER_NAME *apollo_list_front(CONTAINER_NAME *list) {
+static LIST_NAME *apollo_list_front(LIST_NAME *list) {
 	return (list->next);
 }
 
-static CONTAINER_NAME *apollo_list_back(CONTAINER_NAME *list) {
+static LIST_NAME *apollo_list_back(LIST_NAME *list) {
 	return (list);
 }
 
-static bool apollo_list_empty(CONTAINER_NAME *list) {
+static bool apollo_list_empty(LIST_NAME *list) {
 	return (list == NULL ? true : false);
 }
 
-static void apollo_list_free(CONTAINER_NAME **list) {
-	CONTAINER_NAME *last = *list;
+static void apollo_list_free(LIST_NAME **list) {
+	LIST_NAME *last = *list;
 
 	while ((*list)->next != last) {
-		CONTAINER_NAME *tmp = *list;
+		LIST_NAME *tmp = *list;
 		*list = (*list)->next;
 		free(tmp);
 	}
@@ -182,11 +186,11 @@ static void apollo_list_free(CONTAINER_NAME **list) {
 	*list = NULL;
 }
 
-static void apollo_list_free_cb(CONTAINER_NAME **list, void (*cb)(CONTAINER_NAME *)) {
-	CONTAINER_NAME *last = *list;
+static void apollo_list_free_cb(LIST_NAME **list, void (*cb)(LIST_NAME *)) {
+	LIST_NAME *last = *list;
 
 	while ((*list)->next != last) {
-		CONTAINER_NAME *tmp = *list;
+		LIST_NAME *tmp = *list;
 		*list = (*list)->next;
 		cb(tmp);
 	}
@@ -208,16 +212,11 @@ static void apollo_list_free_cb(CONTAINER_NAME **list, void (*cb)(CONTAINER_NAME
 
 #define APOLLO_HASHMAP_INIT_CAPACITY 100
 
-#define GET_HASHMAP_NAME(name, key_type, value_type) name
-#define GET_HASHMAP_KEY_TYPE(name, key_type, value_type) key_type
-#define GET_HASHMAP_VALUE_TYPE(name, key_type, value_type) value_type
-#define HASHMAP_EXPAND_NAME(...) GET_HASHMAP_NAME(__VA_ARGS__)
-#define HASHMAP_EXPAND_KEY_TYPE(...) GET_HASHMAP_KEY_TYPE(__VA_ARGS__)
-#define HASHMAP_EXPAND_VALUE_TYPE(...) GET_HASHMAP_VALUE_TYPE(__VA_ARGS__)
+#define HASHMAP_NAME EXPAND(GET_ARG1, HM)
+#define HASHMAP_KEY_TYPE EXPAND(GET_ARG2, HM)
+#define HASHMAP_VALUE_TYPE EXPAND(GET_ARG3, HM)
 
-#define HASHMAP_NAME HASHMAP_EXPAND_NAME(HM)
-#define HASHMAP_KEY_TYPE HASHMAP_EXPAND_KEY_TYPE(HM)
-#define HASHMAP_VALUE_TYPE HASHMAP_EXPAND_VALUE_TYPE(HM)
+//#define HASHMAP_FUNC(name) CAT(apollo_hashmap_, CAT(HASHMAP_NAME, name))
 
 typedef struct HASHMAP_NAME {
 	HASHMAP_KEY_TYPE key;
@@ -248,16 +247,14 @@ static int hash(HASHMAP_KEY_TYPE key) {
 }
 
 static void apollo_hashmap_push(HASHMAP_NAME **hmap, HASHMAP_KEY_TYPE key, HASHMAP_VALUE_TYPE data) {
-	int index;
-
 	if (*hmap == NULL) {
 		Apollo_arr_header *header = malloc(sizeof(Apollo_arr_header) + APOLLO_HASHMAP_INIT_CAPACITY * sizeof(HASHMAP_NAME));
 		header->capacity = APOLLO_HASHMAP_INIT_CAPACITY;
 		header->count = 0;
 		*hmap = (HASHMAP_NAME *)(header + 1);
 	}
-	Apollo_arr_header *header = (Apollo_arr_header *)(*hmap) - 1;
-	index = hash(key);
+	Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(hmap);
+	int index = hash(key);
 	//printf("Map: %c -> %d. Index %d\n", key, data, index);
 	(*hmap)[index].key = key;
 	(*hmap)[index].data = data;
@@ -265,15 +262,23 @@ static void apollo_hashmap_push(HASHMAP_NAME **hmap, HASHMAP_KEY_TYPE key, HASHM
 }
 
 static HASHMAP_VALUE_TYPE apollo_hashmap_get(HASHMAP_NAME *hmap, HASHMAP_KEY_TYPE key) {
-	Apollo_arr_header *header = (Apollo_arr_header *)hmap - 1;
+	Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(hmap);
 
 	int index = hash(key);
 	printf("Index %d\n", index);
 	return (hmap[index].data);
 }
 
+static size_t apollo_hashmap_size(HASHMAP_NAME *hmap) {
+	return (apollo_arr_size(hmap));
+}
+
+static bool apollo_hashmap_empty(HASHMAP_NAME *hmap) {
+	return (apollo_arr_empty(hmap));
+}
+
 static void apollo_hashmap_free(HASHMAP_NAME *hmap) {
-	free((Apollo_arr_header *)hmap - 1);
+	apollo_arr_free(hmap);
 }
 // End Hashmap
 
