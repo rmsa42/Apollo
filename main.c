@@ -1,53 +1,49 @@
 #include <stdio.h>
+#include "apollo.h"
 
-#define L IList, int
-#define HM Map, char, int
-#include "apollo.h"
-#undef HM
-#undef L
-#define L DList, double
-#define HM HMap, char *, int
-#include "apollo.h"
+LIST_DECL(IList, int)
+HASHMAP_DECL(Map, char, int);
+HASHMAP_DECL(HMap, char *, int);
 
 void map() {
 	Map *map = NULL;
 	HMap *lol = NULL;
 
 	// Map, char, int
-	hmap_Map_push(&map, 'a', 1);
-	hmap_Map_push(&map, 'd', 10);
-	hmap_Map_push(&map, 'f', 20);
-	printf("Key: %c -> %d\n", 'a', hmap_Map_get(map, 'a'));
-	printf("Key: %c -> %d\n", 'd', hmap_Map_get(map, 'd'));
-	printf("Key: %c -> %d\n", 'f', hmap_Map_get(map, 'f'));
-	printf("HashMap size: %zu %d\n", hmap_Map_size(map), hmap_Map_empty(map));
+	Map_push(&map, 'a', 1);
+	Map_push(&map, 'd', 10);
+	Map_push(&map, 'f', 20);
+	printf("Key: %c -> %d\n", 'a', Map_get(map, 'a'));
+	printf("Key: %c -> %d\n", 'd', Map_get(map, 'd'));
+	printf("Key: %c -> %d\n", 'f', Map_get(map, 'f'));
+	printf("HashMap size: %zu %d\n", Map_size(map), Map_empty(map));
 
 	// HMap, char *, int
-	hmap_HMap_push(&lol, "fish", 100);
-	printf("Key: %s -> %d\n", "fish", hmap_HMap_get(lol, "fish"));
+	HMap_push(&lol, "fish", 100);
+	printf("Key: %s -> %d\n", "fish", HMap_get(lol, "fish"));
 
-	hmap_Map_free(map);
-	hmap_HMap_free(lol);
+	Map_free(map);
+	HMap_free(lol);
 	printf("\n");
 }
 
 void list() {
 	IList *list = NULL;
 
-	list_IList_push_front(&list, 10);
-	list_IList_push_front(&list, 5);
+	IList_push_front(&list, 10);
+	IList_push_front(&list, 5);
 	//list_push_front(&list, 0);
-	list_IList_push_back(&list, 40);
-	list_IList_pop_front(&list);
-	list_IList_pop_back(&list);
+	IList_push_back(&list, 40);
+	IList_pop_front(&list);
+	IList_pop_back(&list);
 
-	if (!list_IList_empty(list)) {
-		printf("List front: %d\n", list_IList_front(list)->data);
-		printf("List back: %d\n", list_IList_back(list)->data);
-		printf("List size: %zu\n", list_IList_size(list));
+	if (!IList_empty(list)) {
+		printf("List front: %d\n", IList_front(list)->data);
+		printf("List back: %d\n", IList_back(list)->data);
+		printf("List size: %zu\n", IList_size(list));
 	}
 
-	list_IList_free(&list);
+	IList_free(&list);
 }
 
 void stack() {
@@ -92,5 +88,6 @@ int main() {
 	list();
 	stack();
 	arr();
+
 	return 0;
 }
