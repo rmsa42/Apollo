@@ -1,9 +1,13 @@
-#include <stdio.h>
 #include "apollo.h"
+#include <stdio.h>
 
 LIST_DECL(IList, int)
-HASHMAP_DECL(Map, char, int);
-HASHMAP_DECL(HMap, char *, int);
+HASHMAP_DECL(Map, char, int)
+HASHMAP_DECL(HMap, char *, int)
+
+LIST_IMPL(IList, int)
+HASHMAP_IMPL(Map, char, int)
+HASHMAP_IMPL(HMap, char *, int)
 
 void map() {
 	Map *map = NULL;
@@ -32,7 +36,7 @@ void list() {
 
 	IList_push_front(&list, 10);
 	IList_push_front(&list, 5);
-	//list_push_front(&list, 0);
+	// list_push_front(&list, 0);
 	IList_push_back(&list, 40);
 	IList_pop_front(&list);
 	IList_pop_back(&list);
@@ -60,7 +64,7 @@ void stack() {
 	for (int i = 0; i < apollo_stack_size(stack); i++) {
 		printf("Stack: %d\n", stack[i]);
 	}
-	
+
 	apollo_stack_free(stack);
 }
 

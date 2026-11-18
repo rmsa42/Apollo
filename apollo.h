@@ -82,14 +82,27 @@ typedef struct Apollo_arr_header {
 // End Stack (LIFO)
 
 // List
-#define LIST_DECL(LIST_NAME, LIST_TYPE)                                                      \
-                                                                                             \
+#define LIST_DECL(LIST_NAME, LIST_TYPE)														 \
+																							 \
 	typedef struct LIST_NAME {                                                               \
 		LIST_TYPE data;                                                                      \
 		struct LIST_NAME *next;                                                              \
 	} LIST_NAME;                                                                             \
+																							 \
+	void FUNC_DECL(LIST_NAME, _push_back)(LIST_NAME **list, LIST_TYPE v);					 \
+	void FUNC_DECL(LIST_NAME, _push_front)(LIST_NAME * *list, LIST_TYPE v);					 \
+	void FUNC_DECL(LIST_NAME, _pop_front)(LIST_NAME * *list);								 \
+	void FUNC_DECL(LIST_NAME, _pop_back)(LIST_NAME * *list);								 \
+	size_t FUNC_DECL(LIST_NAME, _size)(LIST_NAME * list);									 \
+	LIST_NAME *FUNC_DECL(LIST_NAME, _front)(LIST_NAME * list);                       		 \
+	LIST_NAME *FUNC_DECL(LIST_NAME, _back)(LIST_NAME * list);                        		 \
+	bool FUNC_DECL(LIST_NAME, _empty)(LIST_NAME * list);									 \
+	void FUNC_DECL(LIST_NAME, _free)(LIST_NAME * *list);									 \
+	void FUNC_DECL(LIST_NAME, _free_cb)(LIST_NAME * *list, void (*cb)(LIST_NAME *));		 \
+
+#define LIST_IMPL(LIST_NAME, LIST_TYPE)                                                      \
                                                                                              \
-	static void FUNC_DECL(LIST_NAME, _push_back)(LIST_NAME * *list, LIST_TYPE v) {           \
+	void FUNC_DECL(LIST_NAME, _push_back)(LIST_NAME * *list, LIST_TYPE v) {					 \
 		LIST_NAME *ptr = (LIST_NAME *)malloc(sizeof(LIST_NAME));                             \
                                                                                              \
 		ptr->data = v;                                                                       \
@@ -102,7 +115,7 @@ typedef struct Apollo_arr_header {
 		*list = ptr;                                                                         \
 	}                                                                                        \
                                                                                              \
-	static void FUNC_DECL(LIST_NAME, _push_front)(LIST_NAME * *list, LIST_TYPE v) {          \
+	void FUNC_DECL(LIST_NAME, _push_front)(LIST_NAME * *list, LIST_TYPE v) {				 \
 		LIST_NAME *ptr = (LIST_NAME *)malloc(sizeof(LIST_NAME));                             \
                                                                                              \
 		ptr->data = v;                                                                       \
@@ -115,7 +128,7 @@ typedef struct Apollo_arr_header {
 		(*list)->next = ptr;                                                                 \
 	}                                                                                        \
                                                                                              \
-	static void FUNC_DECL(LIST_NAME, _pop_front)(LIST_NAME * *list) {                        \
+	void FUNC_DECL(LIST_NAME, _pop_front)(LIST_NAME * *list) {								 \
 		if (*list == NULL) {                                                                 \
 			return;                                                                          \
 		}                                                                                    \
@@ -128,7 +141,7 @@ typedef struct Apollo_arr_header {
 		free(tmp);                                                                           \
 	}                                                                                        \
                                                                                              \
-	static void FUNC_DECL(LIST_NAME, _pop_back)(LIST_NAME * *list) {                         \
+	void FUNC_DECL(LIST_NAME, _pop_back)(LIST_NAME * *list) {								 \
 		if (*list == NULL) {                                                                 \
 			return;                                                                          \
 		}                                                                                    \
@@ -145,7 +158,7 @@ typedef struct Apollo_arr_header {
 		(*list) = tmp;                                                                       \
 	}                                                                                        \
                                                                                              \
-	static size_t FUNC_DECL(LIST_NAME, _size)(LIST_NAME * list) {                            \
+	size_t FUNC_DECL(LIST_NAME, _size)(LIST_NAME * list) {									 \
 		void *last = list;                                                                   \
 		size_t size = 0;                                                                     \
                                                                                              \
@@ -159,19 +172,19 @@ typedef struct Apollo_arr_header {
 		return (size + 1);                                                                   \
 	}                                                                                        \
                                                                                              \
-	static LIST_NAME *FUNC_DECL(LIST_NAME, _front)(LIST_NAME * list) {                       \
+	LIST_NAME *FUNC_DECL(LIST_NAME, _front)(LIST_NAME * list) {								 \
 		return (list->next);                                                                 \
 	}                                                                                        \
                                                                                              \
-	static LIST_NAME *FUNC_DECL(LIST_NAME, _back)(LIST_NAME * list) {                        \
+	LIST_NAME *FUNC_DECL(LIST_NAME, _back)(LIST_NAME * list) {								 \
 		return (list);                                                                       \
 	}                                                                                        \
                                                                                              \
-	static bool FUNC_DECL(LIST_NAME, _empty)(LIST_NAME * list) {                             \
+	bool FUNC_DECL(LIST_NAME, _empty)(LIST_NAME * list) {									 \
 		return (list == NULL ? true : false);                                                \
 	}                                                                                        \
                                                                                              \
-	static void FUNC_DECL(LIST_NAME, _free)(LIST_NAME * *list) {                             \
+	void FUNC_DECL(LIST_NAME, _free)(LIST_NAME * *list) {									 \
 		LIST_NAME *last = *list;                                                             \
                                                                                              \
 		while ((*list)->next != last) {                                                      \
@@ -183,7 +196,7 @@ typedef struct Apollo_arr_header {
 		*list = NULL;                                                                        \
 	}                                                                                        \
                                                                                              \
-	static void FUNC_DECL(LIST_NAME, _free_cb)(LIST_NAME * *list, void (*cb)(LIST_NAME *)) { \
+	void FUNC_DECL(LIST_NAME, _free_cb)(LIST_NAME * *list, void (*cb)(LIST_NAME *)) {		 \
 		LIST_NAME *last = *list;                                                             \
                                                                                              \
 		while ((*list)->next != last) {                                                      \
@@ -198,7 +211,6 @@ typedef struct Apollo_arr_header {
 
 // Hashmap
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 #define APOLLO_HASHMAP_INIT_CAPACITY 10
@@ -231,14 +243,22 @@ static int hash(void *key, size_t type_size) {
 	return (hash_8B(k));
 }
 
-#define HASHMAP_DECL(HASHMAP_NAME, HASHMAP_KEY_TYPE, HASHMAP_VALUE_TYPE)                                              \
-                                                                                                                      \
+#define HASHMAP_DECL(HASHMAP_NAME, HASHMAP_KEY_TYPE, HASHMAP_VALUE_TYPE)											  \
+																													  \
 	typedef struct HASHMAP_NAME {                                                                                     \
 		HASHMAP_KEY_TYPE key;                                                                                         \
 		HASHMAP_VALUE_TYPE data;                                                                                      \
 	} HASHMAP_NAME;                                                                                                   \
+																													  \
+	void FUNC_DECL(HASHMAP_NAME, _push)(HASHMAP_NAME **hmap, HASHMAP_KEY_TYPE key, HASHMAP_VALUE_TYPE data);		  \
+	HASHMAP_VALUE_TYPE FUNC_DECL(HASHMAP_NAME, _get)(HASHMAP_NAME *hmap, HASHMAP_KEY_TYPE key);						  \
+	size_t FUNC_DECL(HASHMAP_NAME, _size)(HASHMAP_NAME *hmap);														  \
+	bool FUNC_DECL(HASHMAP_NAME, _empty)(HASHMAP_NAME *hmap);														  \
+	void FUNC_DECL(HASHMAP_NAME, _free)(HASHMAP_NAME *hmap);														  \
+
+#define HASHMAP_IMPL(HASHMAP_NAME, HASHMAP_KEY_TYPE, HASHMAP_VALUE_TYPE)                                              \
                                                                                                                       \
-	static void FUNC_DECL(HASHMAP_NAME, _push)(HASHMAP_NAME * *hmap, HASHMAP_KEY_TYPE key, HASHMAP_VALUE_TYPE data) { \
+	void FUNC_DECL(HASHMAP_NAME, _push)(HASHMAP_NAME **hmap, HASHMAP_KEY_TYPE key, HASHMAP_VALUE_TYPE data) {		  \
 		if (*hmap == NULL) {                                                                                          \
 			apollo_arr_init(*hmap, APOLLO_HASHMAP_INIT_CAPACITY, sizeof(HASHMAP_NAME));                               \
 		}                                                                                                             \
@@ -248,22 +268,22 @@ static int hash(void *key, size_t type_size) {
 		header->count++;                                                                                              \
 	}                                                                                                                 \
                                                                                                                       \
-	static HASHMAP_VALUE_TYPE FUNC_DECL(HASHMAP_NAME, _get)(HASHMAP_NAME * hmap, HASHMAP_KEY_TYPE key) {              \
+	HASHMAP_VALUE_TYPE FUNC_DECL(HASHMAP_NAME, _get)(HASHMAP_NAME *hmap, HASHMAP_KEY_TYPE key) {					  \
 		Apollo_arr_header *header = GET_APOLLO_ARR_HEADER(hmap);                                                      \
                                                                                                                       \
 		int index = hash((void *)&key, sizeof(HASHMAP_KEY_TYPE)) & (header->capacity - 1);                            \
 		return (hmap[index].data);                                                                                    \
 	}                                                                                                                 \
                                                                                                                       \
-	static size_t FUNC_DECL(HASHMAP_NAME, _size)(HASHMAP_NAME * hmap) {                                               \
+	size_t FUNC_DECL(HASHMAP_NAME, _size)(HASHMAP_NAME *hmap) {														  \
 		return (apollo_arr_size(hmap));                                                                               \
 	}                                                                                                                 \
                                                                                                                       \
-	static bool FUNC_DECL(HASHMAP_NAME, _empty)(HASHMAP_NAME * hmap) {                                                \
+	bool FUNC_DECL(HASHMAP_NAME, _empty)(HASHMAP_NAME *hmap) {														  \
 		return (apollo_arr_empty(hmap));                                                                              \
 	}                                                                                                                 \
                                                                                                                       \
-	static void FUNC_DECL(HASHMAP_NAME, _free)(HASHMAP_NAME * hmap) {                                                 \
+	void FUNC_DECL(HASHMAP_NAME, _free)(HASHMAP_NAME *hmap) {														  \
 		apollo_arr_free(hmap);                                                                                        \
-	}                                                                                                                 \
+	}																												  \
 // End Hashmap
